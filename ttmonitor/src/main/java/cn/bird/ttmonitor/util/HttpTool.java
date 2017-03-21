@@ -79,7 +79,7 @@ public final class HttpTool {
 	 * @throws IOException 
 	 * @throws MalformedURLException 
 	 */
-	public static String[] get( String url,String encode,int connectTimeout,int responseTimeout ) throws MalformedURLException, IOException {
+	public static String[] get( String url,String cookie, String encode,int connectTimeout,int responseTimeout ) throws MalformedURLException, IOException {
 		HttpURLConnection con = null;
 		InputStream in = null;
 		String[] response = new String[2];
@@ -87,6 +87,7 @@ public final class HttpTool {
 			con = (HttpURLConnection)( new URL( url ).openConnection() );
 			con.setDoInput( true );
 			con.setRequestMethod( METHOD_GET );
+			con.setRequestProperty("Cookie", cookie);
 			con.setConnectTimeout( connectTimeout );// 连接超时时间
 			con.setReadTimeout( responseTimeout );// 响应超时时间
 			if( HttpURLConnection.HTTP_OK==con.getResponseCode() ){
@@ -133,7 +134,7 @@ public final class HttpTool {
 	 * @throws IOException 
 	 * @throws MalformedURLException 
 	 */
-	public static String[] post( String url,String requestData,String charset,int connectTimeout,int responseTimeout ) throws MalformedURLException, IOException {
+	public static String[] post( String url,String requestData,String cookie, String charset,int connectTimeout,int responseTimeout ) throws MalformedURLException, IOException {
 		HttpURLConnection con = null;
 		OutputStream out = null;
 		InputStream in = null;
@@ -143,6 +144,7 @@ public final class HttpTool {
 			con.setDoInput( true );
 			con.setDoOutput( true );
 			con.setRequestMethod( METHOD_POST );
+			con.setRequestProperty("Cookie", cookie);
 			con.setConnectTimeout( connectTimeout );// 连接超时时间
 			con.setReadTimeout( responseTimeout );// 响应超时时间
 			out = con.getOutputStream();

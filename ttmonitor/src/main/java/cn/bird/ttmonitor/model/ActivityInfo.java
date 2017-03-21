@@ -2,6 +2,7 @@ package cn.bird.ttmonitor.model;
 
 public class ActivityInfo {
 	private int id;
+	private String name;
 	private String startTime;
 	private String endTime;
 	private int chengTuanCount;

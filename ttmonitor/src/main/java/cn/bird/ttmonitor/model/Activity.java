@@ -2,6 +2,7 @@ package cn.bird.ttmonitor.model;
 
 public class Activity {
 	private int id;
+	private String name;
 	private String startTime;
 	private String endTime;
 	public int getId() {
@@ -21,6 +22,12 @@ public class Activity {
 	}
 	public void setEndTime(String endTime) {
 		this.endTime = endTime;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 }
