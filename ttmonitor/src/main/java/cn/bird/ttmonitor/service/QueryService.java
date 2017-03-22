@@ -90,6 +90,7 @@ public class QueryService {
 											category.setName(item.getString("Name"));
 											resultList.add(category);
 										}
+										return resultList;
 									}
 								}
 							}else{
@@ -106,7 +107,7 @@ public class QueryService {
 		} catch (Exception e) {
 			logger.error("exception while getCategoryList", e);
 		}
-		return resultList;
+		return null;
 	}
 
 	public List<Activity> getActivityList(int cid){
@@ -135,6 +136,7 @@ public class QueryService {
 											activity.setEndTime(item.getString("ToTime"));
 											resultList.add(activity);
 										}
+										return resultList;
 									}
 								}
 							}else{
@@ -151,7 +153,7 @@ public class QueryService {
 		} catch (Exception e) {
 			logger.error("exception while getActivityList", e);
 		}
-		return resultList;
+		return null;
 	}
 	
 	public List<ActivityItem> getActivityItemList(Activity activity, int displayMode, int pageIndex, int pageSize){
@@ -186,6 +188,7 @@ public class QueryService {
 											activityItem.setDisplayStatu(item.getString("DisplayStatu"));
 											resultList.add(activityItem);
 										}
+										return resultList;
 									}
 								}
 							}
@@ -196,6 +199,6 @@ public class QueryService {
 		} catch (Exception e) {
 			logger.error("exception while getActivityItemList", e);
 		}
-		return resultList;
+		return null;
 	}
 }
