@@ -4,14 +4,19 @@ import java.io.File;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSON;
+
 import cn.bird.ttmonitor.model.Activity;
 import cn.bird.ttmonitor.model.ActivityItem;
 import cn.bird.ttmonitor.model.Category;
+import cn.bird.ttmonitor.model.ItemDetail;
 import cn.bird.ttmonitor.service.QueryService;
 import cn.bird.ttmonitor.util.ConfigUtil;
 
@@ -36,6 +41,17 @@ public class Server {
 		FileWriter itemWriter = new FileWriter(itemFile, false);
 		
 		try{
+			Set<Integer> targetCategorySet = new HashSet<Integer>();
+			Set<Integer> targetActivitySet = new HashSet<Integer>();
+			List<Object> tempList = ConfigUtil.config.getList("tt.target_category_list");
+			for(Object item : tempList){
+				targetCategorySet.add(Integer.parseInt((String)item));
+			}
+			tempList = ConfigUtil.config.getList("tt.target_activity_list");
+			for(Object item : tempList){
+				targetActivitySet.add(Integer.parseInt((String)item));
+			}
+			
 			QueryService queryService = new QueryService(ConfigUtil.config.getString("tt.cookie"), ConfigUtil.config.getString("tt.activity_url"),
 					ConfigUtil.config.getString("tt.activity_items_url"), ConfigUtil.config.getString("tt.item_url"));
 			List<Category> categoryList = queryService.getCategoryList();
@@ -48,6 +64,9 @@ public class Server {
 				}
 			}
 			for(Category category : categoryList){
+				if(!targetCategorySet.contains(category.getId())){
+					continue;
+				}
 				categoryWriter.write(String.format("%s|%s|%s\n", day, category.getId(), category.getName()));
 				List<Activity> activityList = queryService.getActivityList(category.getId());
 				if(activityList == null){
@@ -59,6 +78,9 @@ public class Server {
 					}
 				}
 				for(Activity activity : activityList){
+					if(!targetActivitySet.contains(activity.getId())){
+						continue;
+					}
 					activityWriter.write(String.format("%s|%s|%s|%s|%s|%s\n", day, category.getId(), activity.getId(), activity.getName(), activity.getStartTime(), activity.getEndTime()));
 					int displayMode = 0;
 					int pageIndex = 1;
@@ -80,8 +102,35 @@ public class Server {
 						}
 						if(itemList.size() > 0){
 							for(ActivityItem item : itemList){
-								itemWriter.write(String.format("%s|%s|%s|%s|%s|%s|%s|%s\n", day, category.getId(),activity.getId(),item.getId(),
-										item.getDealCount(),item.getTotalQty(),item.getPrice().toPlainString(),item.getTitle()));
+								ItemDetail itemDetail = queryService.getItemDetail(item.getId(), activity.getId());
+								if(itemDetail == null){
+									itemDetail = queryService.getItemDetail(item.getId(), activity.getId());
+								}
+								if(itemDetail != null){
+									itemWriter.write(String.format("%s\t%s\t%s\t%s\t%s\n", itemDetail.getId(), activity.getName(),
+											itemDetail.getName(), itemDetail.getPrice().setScale(2).toPlainString(),
+											JSON.toJSONString(itemDetail.getProducts())));
+								}
+								String imageDir = dataDir + File.separator + "image" + File.separator + day + "_" + currentTime + File.separator + itemDetail.getId();
+								File dir = new File(imageDir);
+								if(!dir.exists()){
+									dir.mkdirs();
+								}
+								int imageNum = 1;
+								for(String imageUrl : itemDetail.getImages()){
+									int i = imageUrl.lastIndexOf(".");
+									int j = imageUrl.lastIndexOf(":");
+									if(i >= 0 && j >= 0){
+										String postfix = imageUrl.substring(i+1);
+										String urlPath = imageUrl.substring(j+1);
+										String fullImageUrl = "https://nahuo-img-server.b0.upaiyun.com" + urlPath;
+										String imageFilePath = imageDir + File.separator + imageNum + "." + postfix;
+										queryService.downloadPic(fullImageUrl, imageFilePath);
+										imageNum++;
+									}
+								}
+								//itemWriter.write(String.format("%s|%s|%s|%s|%s|%s|%s|%s\n", day, category.getId(),activity.getId(),item.getId(),
+								//		item.getDealCount(),item.getTotalQty(),item.getPrice().toPlainString(),item.getTitle()));
 							}
 							pageIndex++;
 							try {

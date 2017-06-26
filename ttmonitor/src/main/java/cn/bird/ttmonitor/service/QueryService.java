@@ -1,7 +1,11 @@
 package cn.bird.ttmonitor.service;
 
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -16,6 +20,7 @@ import com.alibaba.fastjson.JSONObject;
 import cn.bird.ttmonitor.model.Activity;
 import cn.bird.ttmonitor.model.ActivityItem;
 import cn.bird.ttmonitor.model.Category;
+import cn.bird.ttmonitor.model.ItemDetail;
 import cn.bird.ttmonitor.util.HttpTool;
 
 public class QueryService {
@@ -200,5 +205,62 @@ public class QueryService {
 			logger.error("exception while getActivityItemList", e);
 		}
 		return null;
+	}
+	
+	public ItemDetail getItemDetail(long id, int qsid){
+		ItemDetail itemDetail = new ItemDetail();
+		String url = String.format("%s?id=%s&qsid=%s", itemUrl, id, qsid);
+		try {
+			String[] response = HttpTool.get(url, cookie, "UTF-8", 5000, 5000);
+			if(response != null){
+				if(response[0].equals("200")){
+					JSONObject json = JSON.parseObject(response[1]);
+					if(json != null){
+						Boolean result = json.getBoolean("Result");
+						if(result != null){
+							if(result){
+								JSONObject data = json.getJSONObject("Data");
+								if(data != null){
+									itemDetail.setId(data.getIntValue("ItemID"));
+									itemDetail.setName(data.getString("Name"));
+									itemDetail.setPrice(data.getBigDecimal("Price"));
+									itemDetail.setImages(data.getJSONArray("Images").toJavaList(String.class));
+									JSONArray products = data.getJSONArray("Products");
+									if(products != null){
+										List<Object> productList = new ArrayList<Object>();
+										for(int i = 0; i < products.size(); i++){
+											JSONObject jo = products.getJSONObject(i);
+											productList.add(jo);
+										}
+										itemDetail.setProducts(productList);
+									}
+									return itemDetail;
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			logger.error("exception while getItemDetail", e);
+		}
+		return null;
+	}
+	
+	public void downloadPic(String imageUrl, String imagePath){
+		try{
+			URL url = new URL(imageUrl);
+			DataInputStream dis = new DataInputStream(url.openStream());
+			FileOutputStream fos = new FileOutputStream(new File(imagePath));
+			byte[] buffer = new byte[1024];
+			int length = 0;
+			while((length = dis.read(buffer)) > 0){
+				fos.write(buffer, 0, length);
+			}
+			dis.close();
+			fos.close();
+		}catch(Exception e){
+			logger.error("exception while download picture");
+		}
 	}
 }
